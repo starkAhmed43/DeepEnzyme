@@ -90,3 +90,9 @@ CUDA_VISIBLE_DEVICES=2 conda run -n mldb python emulator_bench/launch_parallel_r
   --split_groups random_splits_grouped_sequence \
   --seeds 666
 ```
+
+## Aggregate completed DeepEnzyme results
+
+```bash
+conda run -n mldb python emulator_bench/aggregate_deepenzyme_results.py
+```
