@@ -34,6 +34,7 @@ METRIC_ALIASES = {
     "rmse": "RMSE",
     "r2": "R2",
     "pcc": "PCC",
+    "scc": "SCC",
     "loss": "Loss",
 }
 
@@ -65,7 +66,15 @@ def load_seed_results(seed_dir: Path) -> dict[str, pd.Series] | None:
         df = pd.read_csv(fpath)
         if df.empty:
             return None
-        results[split] = df.iloc[0]
+        series = df.iloc[0].copy()
+
+        pred_path = seed_dir / f"pred_label_{split}.csv"
+        if pred_path.exists():
+            pred_df = pd.read_csv(pred_path)
+            if {"pred", "label"}.issubset(pred_df.columns) and len(pred_df) > 1:
+                series["SCC"] = pred_df["pred"].corr(pred_df["label"], method="spearman")
+
+        results[split] = series
     return results
 
 
