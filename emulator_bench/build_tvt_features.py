@@ -5,7 +5,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from tqdm.auto import tqdm
+try:
+    from src.utils.rich_progress import progress, write
+except ModuleNotFoundError:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from src.utils.rich_progress import progress, write
 
 from feature_utils import (
     FeatureCache,
@@ -52,7 +58,7 @@ def build_split_features(args):
     kept_indices = []
     failed_rows = []
 
-    iterator = tqdm(df.itertuples(index=False), total=len(df), desc=f"Feature build: {input_csv.name}")
+    iterator = progress(df.itertuples(index=False), total=len(df), desc=f"Feature build: {input_csv.name}")
     for row_idx, row in enumerate(iterator):
         try:
             seq = str(getattr(row, args.sequence_col))

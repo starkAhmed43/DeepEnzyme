@@ -9,7 +9,13 @@ import numpy as np
 import pandas as pd
 import torch
 from torch import nn, optim
-from tqdm.auto import tqdm
+try:
+    from src.utils.rich_progress import progress, write
+except ModuleNotFoundError:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from src.utils.rich_progress import progress, write
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -65,7 +71,7 @@ def train_epoch(model, dataset, optimizer, loss_fn, args, device, amp_dtype, sca
     model.train(True)
     y_true, y_pred = [], []
     total_loss = 0.0
-    iterator = tqdm(dataset, desc="train", leave=False, unit="sample", disable=args.hide_sample_progress, dynamic_ncols=True)
+    iterator = progress(dataset, desc="train", leave=False, unit="sample", disable=args.hide_sample_progress, dynamic_ncols=True)
     sse = 0.0
     for idx, data in enumerate(iterator, start=1):
         optimizer.zero_grad(set_to_none=True)
@@ -98,7 +104,7 @@ def evaluate(model, dataset, loss_fn, args, device, amp_dtype, desc):
     model.train(False)
     y_true, y_pred = [], []
     total_loss = 0.0
-    iterator = tqdm(dataset, desc=desc, leave=False, unit="sample", disable=args.hide_sample_progress, dynamic_ncols=True)
+    iterator = progress(dataset, desc=desc, leave=False, unit="sample", disable=args.hide_sample_progress, dynamic_ncols=True)
     sse = 0.0
     for idx, data in enumerate(iterator, start=1):
         inputs, label = data[:-1], data[-1]
@@ -238,7 +244,7 @@ def main(args):
         "Lr",
     ]
     started = timeit.default_timer()
-    epoch_iter = tqdm(
+    epoch_iter = progress(
         range(start_epoch + 1, args.iteration + 1),
         desc="epochs",
         unit="epoch",
@@ -286,7 +292,7 @@ def main(args):
         save_checkpoint(last_checkpoint, epoch, model, optimizer, scheduler, scaler, best_val_rmse, records, args)
         epoch_iter.set_postfix(test_rmse=f"{test_metrics['RMSE']:.4g}", lr=f"{optimizer.param_groups[0]['lr']:.3g}")
         if args.log_json:
-            tqdm.write(json.dumps(row))
+            write(json.dumps(row))
 
     if not best_checkpoint.exists():
         save_checkpoint(best_checkpoint, args.iteration, model, optimizer, scheduler, scaler, best_val_rmse, records, args)

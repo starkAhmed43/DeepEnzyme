@@ -6,7 +6,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from tqdm.auto import tqdm
+try:
+    from src.utils.rich_progress import progress, write
+except ModuleNotFoundError:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from src.utils.rich_progress import progress, write
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -89,7 +95,7 @@ def build_feature_split(manifest: Path, out_dir: Path, args, dictionaries: dict)
     kept_rows, failed_rows = [], []
     stats = {"sequence_hits": 0, "sequence_writes": 0, "smiles_hits": 0, "smiles_writes": 0, "structure_hits": 0, "structure_writes": 0}
 
-    iterator = tqdm(frame.to_dict("records"), desc=f"Caching {manifest.parent.parent.name}/{manifest.parent.name}/{manifest.stem}", unit="row")
+    iterator = progress(frame.to_dict("records"), desc=f"Caching {manifest.parent.parent.name}/{manifest.parent.name}/{manifest.stem}", unit="row")
     for idx, row in enumerate(iterator):
         try:
             seq = str(row["sequence"])
